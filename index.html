@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="theme-color" content="#040812">
+<meta name="format-detection" content="telephone=no">
+<title>重新出发|涉罪未成年人持续帮扶和社会融入</title>
+<style>
+/* ===== 赛博系统面板设计变量 ===== */
+:root {
+  --bg-deep: #040812;
+  --panel-bg: rgba(8, 20, 38, 0.75);
+  --panel-border: rgba(0, 240, 255, 0.2);
+  --primary-cyan: #00f0ff;
+  --primary-glow: rgba(0, 240, 255, 0.4);
+  --accent-purple: #7000ff;
+  --text-main: #e8f2fc;
+  --text-light: #a4c1d7;
+  --text-muted: #587d9e;
+  --green: #00ff66;
+  --red: #ff3366;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --radius: 12px;
+  --nav-h: 64px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: var(--nav-h); -webkit-text-size-adjust: 100%; }
+body {
+  font: 15px/1.8 var(--font-sans);
+  color: var(--text-main);
+  background: var(--bg-deep);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+body.lock { overflow: hidden; }
+
+/* ===== 画布背景（全局流星雨 + 烟花） ===== */
+#bg-canvas {
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+}
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -2; pointer-events: none;
+  background:
+    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ===== 1. 独立开场页 (Intro Screen) - 取消虚化，极度清晰 ===== */
+#intro-page {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(4, 8, 18, 0.2); /* 极低浓度遮罩，让流星和烟花毫无遮挡地呈现 */
+  transition: opacity 0.8s ease, visibility 0.8s ease;
+}
+#intro-page.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.intro-title {
+  font-family: var(--font-mono); font-size: 28px; color: var(--primary-cyan);
+  letter-spacing: 4px; margin-bottom: 16px; text-shadow: 0 0 15px var(--primary-glow);
+  text-align: center; font-weight: 800;
+}
+.intro-sub {
+  font-family: var(--font-mono); font-size: 14px; color: var(--text-light);
+  margin-bottom: 50px; letter-spacing: 2px; text-align: center;
+}
+.enter-btn {
+  padding: 16px 48px; border-radius: 30px;
+  background: rgba(0, 240, 255, 0.1); color: var(--primary-cyan);
+  border: 1px solid var(--primary-cyan); font-family: var(--font-mono); font-size: 16px; font-weight: bold;
+  cursor: pointer; transition: all 0.3s; box-shadow: 0 0 15px var(--primary-glow);
+  position: relative; overflow: hidden;
+}
+.enter-btn:hover { background: rgba(0, 240, 255, 0.25); box-shadow: 0 0 30px var(--primary-glow); }
+
+/* ===== 2. 主页面 (Main App) ===== */
+#main-app {
+  display: none;
+  opacity: 0;
+  transition: opacity 1s ease;
+  padding-top: var(--nav-h);
+}
+#main-app.active { display: block; opacity: 1; }
+
+/* 顶部导航 */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(4, 8, 18, 0.85);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--panel-border);
+}
+.nav-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  max-width: 1100px; margin: 0 auto; height: 64px; padding: 0 20px;
+}
+.brand {
+  font-family: var(--font-mono); font-size: 18px; font-weight: 700;
+  color: var(--primary-cyan); text-shadow: 0 0 10px var(--primary-glow);
+  text-decoration: none;
+}
+.brand span { color: var(--text-main); }
+.nav-links { display: flex; gap: 24px; overflow-x: auto; scrollbar-width: none; }
+.nav-links::-webkit-scrollbar { display: none; }
+.nav-links a {
+  color: var(--text-light); font-size: 14px; font-family: var(--font-mono);
+  text-decoration: none; white-space: nowrap; transition: color 0.3s;
+}
+.nav-links a:hover { color: var(--primary-cyan); text-shadow: 0 0 8px var(--primary-glow); }
+
+/* ===== 通用布局 ===== */
+.container { max-width: 1000px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 10; }
+section { padding: 80px 0; position: relative; }
+.kicker {
+  font-family: var(--font-mono); font-size: 13px; color: var(--primary-cyan);
+  letter-spacing: 2px; margin-bottom: 12px; display: inline-block;
+  border-left: 3px solid var(--primary-cyan); padding-left: 10px;
+}
+
+/* ==== 板块标题与返回首页按钮布局 ==== */
+.section-header {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  flex-wrap: wrap; gap: 16px; margin-bottom: 16px;
+}
+.section-header h2 { 
+  font-size: clamp(24px, 5vw, 36px); font-weight: 700; line-height: 1.3; 
+  color: #fff; margin-bottom: 0; 
+}
+/* 显眼的返回首页按钮 */
+.back-home-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 20px; border-radius: 99px;
+  background: rgba(0, 240, 255, 0.15);
+  color: var(--primary-cyan);
+  border: 1px solid var(--primary-cyan);
+  font-family: var(--font-mono); font-size: 14px; font-weight: 600;
+  text-decoration: none; transition: all 0.3s;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+  white-space: nowrap;
+}
+.back-home-btn:hover {
+  background: var(--primary-cyan); color: var(--bg-deep);
+  box-shadow: 0 0 25px var(--primary-glow);
+  transform: translateY(-2px);
+}
+
+.lead { color: var(--text-light); font-size: 16px; max-width: 800px; margin-bottom: 40px; }
+
+/* ===== 卡片 ===== */
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+.card {
+  background: var(--panel-bg); border: 1px solid var(--panel-border);
+  border-radius: var(--radius); padding: 24px; backdrop-filter: blur(10px);
+  transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+  position: relative; overflow: hidden;
+}
+.card::after {
+  content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary-cyan), transparent);
+  opacity: 0; transition: opacity 0.3s;
+}
+.card:hover { transform: translateY(-4px); border-color: rgba(0, 240, 255, 0.5); box-shadow: 0 8px 30px rgba(0, 240, 255, 0.15); }
+.card:hover::after { opacity: 1; }
+.card-icon { font-size: 32px; margin-bottom: 16px; text-shadow: 0 0 10px var(--primary-glow); }
+.card h3 { font-size: 18px; margin-bottom: 12px; color: #fff; }
+.card p { color: var(--text-light); font-size: 14px; }
+.tag { display: inline-block; padding: 4px 12px; border-radius: 4px; background: rgba(0, 240, 255, 0.1); color: var(--primary-cyan); font-family: var(--font-mono); font-size: 12px; margin-bottom: 16px; }
+
+/* ===== Hero 区域 ===== */
+.hero { min-height: 90vh; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+.hero h1 {
+  font-family: var(--font-mono); font-size: clamp(32px, 6vw, 56px); font-weight: 800;
+  line-height: 1.2; margin-bottom: 24px; color: #fff;
+  text-shadow: 0 0 20px rgba(255,255,255,0.2);
+}
+.hero h1 span { color: var(--primary-cyan); text-shadow: 0 0 20px var(--primary-glow); }
+.hero p { max-width: 700px; margin: 0 auto 40px; color: var(--text-light); font-size: 16px; }
+
+.btn-group { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; max-width: 800px; margin: 0 auto; }
+.btn {
+  padding: 12px 28px; border-radius: 8px; font-family: var(--font-mono); font-size: 15px;
+  font-weight: 600; text-decoration: none; cursor: pointer; transition: all 0.3s;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.btn-primary {
+  background: rgba(0, 240, 255, 0.15); color: var(--primary-cyan);
+  border: 1px solid var(--primary-cyan); box-shadow: 0 0 15px var(--primary-glow);
+}
+.btn-primary:hover { background: rgba(0, 240, 255, 0.3); box-shadow: 0 0 25px var(--primary-glow); }
+.btn-outline { background: rgba(4, 8, 18, 0.5); color: #fff; border: 1px solid var(--panel-border); backdrop-filter: blur(4px); }
+.btn-outline:hover { border-color: var(--primary-cyan); color: var(--primary-cyan); box-shadow: 0 0 15px rgba(0, 240, 255, 0.2); }
+
+/* ===== 帮扶路径 ===== */
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+.step { background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: var(--radius); padding: 24px; position: relative; backdrop-filter: blur(10px); }
+.step-num { width: 36px; height: 36px; border-radius: 50%; background: rgba(0, 240, 255, 0.1); color: var(--primary-cyan); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-weight: 700; margin-bottom: 16px; border: 1px solid var(--primary-cyan); }
+.step h3 { font-size: 16px; margin-bottom: 8px; color: #fff; }
+.step p { color: var(--text-light); font-size: 14px; }
+
+.callout { padding: 24px; border-radius: var(--radius); background: rgba(112, 0, 255, 0.1); border-left: 3px solid var(--accent-purple); color: var(--text-light); font-size: 15px; backdrop-filter: blur(10px); }
+.callout strong { color: #fff; margin-right: 8px; font-family: var(--font-mono); }
+
+/* ===== 测验模块 ===== */
+.quiz-box { background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: var(--radius); overflow: hidden; backdrop-filter: blur(16px); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+.quiz-header { padding: 24px; border-bottom: 1px solid var(--panel-border); background: rgba(0, 0, 0, 0.3); }
+.quiz-header h3 { font-size: 20px; margin-bottom: 12px; color: #fff; }
+.progress-wrap { margin-top: 16px; }
+.progress-text { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 13px; color: var(--primary-cyan); margin-bottom: 8px; }
+.progress-track { height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; width: 0; background: var(--primary-cyan); box-shadow: 0 0 10px var(--primary-cyan); transition: width 0.4s; }
+.questions { padding: 24px; }
+.question { padding: 24px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+.question:last-child { border-bottom: none; }
+.q-type { font-family: var(--font-mono); font-size: 12px; color: var(--accent-purple); margin-bottom: 8px; display: block; }
+.q-title { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 16px; line-height: 1.5; }
+.option { display: flex; gap: 12px; align-items: flex-start; padding: 16px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; font-size: 14px; color: var(--text-light); }
+.option:hover { background: rgba(0, 240, 255, 0.08); border-color: var(--primary-cyan); }
+.option input { margin-top: 4px; accent-color: var(--primary-cyan); cursor: pointer; }
+.option.correct { background: rgba(0, 255, 102, 0.1); border-color: var(--green); color: #a7f3d0; }
+.option.incorrect { background: rgba(255, 51, 102, 0.1); border-color: var(--red); color: #fecaca; }
+.feedback { display: none; padding: 16px; border-radius: 8px; font-size: 14px; margin-top: 12px; }
+.feedback.show { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: none; } }
+.feedback.good { background: rgba(0, 255, 102, 0.1); color: #00ff66; border-left: 3px solid #00ff66; }
+.feedback.bad { background: rgba(255, 51, 102, 0.1); color: #ff3366; border-left: 3px solid #ff3366; }
+.quiz-actions { padding: 24px; display: flex; gap: 16px; flex-wrap: wrap; border-top: 1px solid var(--panel-border); background: rgba(0, 0, 0, 0.2); }
+.result-box { display: none; padding: 48px 24px; text-align: center; background: rgba(0, 240, 255, 0.05); border-top: 2px solid var(--primary-cyan); }
+.result-box.show { display: block; animation: fadeIn 0.4s ease; }
+.score-big { font-family: var(--font-mono); font-size: 56px; color: var(--primary-cyan); text-shadow: 0 0 20px var(--primary-glow); margin: 16px 0; }
+
+/* ===== 行动清单 ===== */
+.action-card { background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: var(--radius); padding: 32px; backdrop-filter: blur(10px); }
+.action-card ul { margin-top: 24px; }
+.action-card li { margin-bottom: 16px; padding-left: 24px; position: relative; color: var(--text-light); font-size: 15px; }
+.action-card li::before { content: "▸"; position: absolute; left: 0; top: 0; color: var(--primary-cyan); }
+.action-card strong { color: #fff; margin-right: 8px; font-family: var(--font-mono); }
+
+/* ===== 页脚 ===== */
+footer { padding: 40px 20px; text-align: center; border-top: 1px solid var(--panel-border); color: var(--text-muted); font-size: 13px; font-family: var(--font-mono); position: relative; z-index: 10; }
+
+/* 滚动渐显 */
+.reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1); }
+.reveal.active { opacity: 1; transform: translateY(0); }
+
+/* ===== 移动端适配 ===== */
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  section { padding: 60px 0; }
+  .hero { min-height: 80vh; }
+  .grid, .steps { grid-template-columns: 1fr; }
+  .quiz-header, .questions, .quiz-actions { padding: 20px; }
+  .action-card { padding: 24px; }
+  .btn-group { flex-direction: column; align-items: center; gap: 10px; }
+  .btn { width: 100%; max-width: 280px; }
+  
+  /* 移动端标题和返回按钮堆叠 */
+  .section-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
+</style>
+</head>
+<body class="lock">
+
+<!-- 全局背景画布（流星雨 + 点击烟花） -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- ================= 1. 独立开场页 ================= -->
+<div id="intro-page">
+  <div class="intro-title">SYSTEM BOOTING...</div>
+  <div class="intro-sub">准备进入成长守护系统</div>
+  <button class="enter-btn" id="enter-btn">进入系统</button>
+</div>
+
+<!-- ================= 2. 主页面 ================= -->
+<div id="main-app">
+  <!-- 导航 -->
+  <nav>
+    <div class="nav-inner">
+      <a href="#hero" class="brand">重新出发<span>_</span></a>
+      <div class="nav-links">
+        <a href="#reality">01 / 认识现状</a>
+        <a href="#values">02 / 价值选择</a>
+        <a href="#path">03 / 帮扶路径</a>
+        <a href="#quiz">04 / 随堂测验</a>
+        <a href="#action">05 / 行动清单</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <!-- Hero (首页) -->
+    <section class="hero" id="hero">
+      <div class="container reveal">
+        <span class="kicker">INTERACTIVE LEARNING SYSTEM</span>
+        <h1>重新出发<span>|</span>涉罪未成年人持续帮扶和社会融入</h1>
+        <p>一次错误不应定义一个人的一生。了解行为背后的原因，学习承担责任、作出更好的选择，也看见家庭、学校、社区与社会能够提供的支持。</p>
+        
+        <div class="btn-group">
+          <a href="#quiz" class="btn btn-primary">开始闯关答题 ↓</a>
+          <a href="#reality" class="btn btn-outline">认识现状</a>
+          <a href="#values" class="btn btn-outline">价值选择</a>
+          <a href="#path" class="btn btn-outline">帮扶路径</a>
+          <a href="#action" class="btn btn-outline">行动清单</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 01 -->
+    <section id="reality">
+      <div class="container reveal">
+        <span class="kicker">01 / UNDERSTAND</span>
+        <div class="section-header">
+          <h2>先理解现实：问题不只是“做错了什么”</h2>
+          <a href="#hero" class="back-home-btn">↑ 返回首页</a>
+        </div>
+        <p class="lead">涉罪未成年人的成长经历各不相同。家庭关系、同伴影响、网络环境、情绪管理和学习困难等因素，可能交织影响一个人的选择。理解原因不是替错误开脱，而是为了找到更有效的预防和帮扶方式。</p>
+        
+        <div class="grid">
+          <div class="card">
+            <div class="card-icon">🧩</div>
+            <span class="tag">影响因素</span>
+            <h3>多种因素交织</h3>
+            <p>冲动应对冲突、渴望被同伴接纳、缺乏稳定支持，或对法律后果认识不足，都可能增加风险。不能用单一背景判断一个人的未来。</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">📱</div>
+            <span class="tag">生活场景</span>
+            <h3>线上线下的选择</h3>
+            <p>网络起哄、传播他人隐私、参与欺凌、替人转账或取钱等行为，都可能带来伤害或法律风险。遇到不确定的事，应暂停并寻求帮助。</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">🌱</div>
+            <span class="tag">帮扶意义</span>
+            <h3>回归需要时间</h3>
+            <p>接受教育、矫治或依法处理后，仍可能面对学习衔接、人际关系和社会偏见等困难。持续支持能够帮助其学习承担责任、逐步融入社会。</p>
+          </div>
+        </div>
+
+        <div class="callout" style="margin-top: 32px;">
+          <strong>学习提示：</strong>不以个别案例代表所有未成年人。讨论重点是降低再次伤害的风险、保护受害者权益，并为愿意改变的人创造负责任地重新融入社会的机会。
+        </div>
+      </div>
+    </section>
+
+    <!-- 02 -->
+    <section id="values">
+      <div class="container reveal">
+        <span class="kicker">02 / MAKE A CHOICE</span>
+        <div class="section-header">
+          <h2>价值观不是口号，而是遇到事情时的选择</h2>
+          <a href="#hero" class="back-home-btn">↑ 返回首页</a>
+        </div>
+        <p class="lead">正确的价值观体现在尊重他人、遵守规则、承担责任、理性解决冲突，以及在压力面前敢于拒绝不当要求。</p>
+        
+        <div class="grid">
+          <div class="card">
+            <div class="card-icon">🤝</div>
+            <h3>尊重与共情</h3>
+            <p>不以玩笑为由羞辱别人，不传播隐私，不把他人的痛苦当成热闹。意见不同，也应尊重对方的人格与边界。</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">⚖️</div>
+            <h3>规则与责任</h3>
+            <p>“大家都这么做”不代表正确。发现自己造成伤害时，应停止行为、面对后果，并在适当支持下采取补救措施。</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">🧭</div>
+            <h3>独立判断</h3>
+            <p>面对同伴起哄、网络诱惑或金钱诱惑，先判断后果；不清楚是否合法时，先拒绝、核实，再向可信赖的人求助。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 -->
+    <section id="path">
+      <div class="container reveal">
+        <span class="kicker">03 / SUPPORT PATHWAY</span>
+        <div class="section-header">
+          <h2>从“处理问题”到“持续帮扶”</h2>
+          <a href="#hero" class="back-home-btn">↑ 返回首页</a>
+        </div>
+        <p class="lead">帮扶不是简单地要求一个人“改好”，而是根据具体情况建立可执行、可跟进的支持方案。</p>
+        
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <h3>了解与评估</h3>
+            <p>了解行为原因、风险和保护因素，避免标签化判断。</p>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <h3>制定支持计划</h3>
+            <p>连接家庭教育、心理支持、法治教育和学习辅导等资源。</p>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <h3>衔接与陪伴</h3>
+            <p>推动学校、家庭、社区和专业机构之间做好沟通衔接。</p>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <h3>跟进与调整</h3>
+            <p>定期了解学习、人际和生活适应情况，及时调整支持方式。</p>
+          </div>
+        </div>
+
+        <div class="callout">
+          <strong>重要原则：</strong>不公开传播未成年人身份和隐私，不围观、不羞辱、不贴标签。对受害者的安全、尊严与合理需求也应认真对待。
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 -->
+    <section id="quiz">
+      <div class="container reveal">
+        <span class="kicker">04 / QUICK QUIZ</span>
+        <div class="section-header">
+          <h2>随堂测验：在情境中练习判断</h2>
+          <a href="#hero" class="back-home-btn">↑ 返回首页</a>
+        </div>
+        <p class="lead">共 8 题，包含判断题与单项选择题。选择答案后自动显示对错和解析，提交后查看总分。</p>
+        
+        <div class="quiz-box">
+          <div class="quiz-header">
+            <h3>成长选择挑战</h3>
+            <div class="progress-wrap">
+              <div class="progress-text">
+                <span>SYS.PROGRESS</span>
+                <span id="progress-label">0 / 8</span>
+              </div>
+              <div class="progress-track"><div class="progress-fill" id="progress-bar"></div></div>
+            </div>
+          </div>
+          
+          <div class="questions" id="questions-container"></div>
+          
+          <div class="quiz-actions">
+            <button class="btn btn-primary" onclick="submitQuiz()">提交结果</button>
+            <button class="btn btn-outline" onclick="resetQuiz()">重新载入</button>
+          </div>
+          
+          <div class="result-box" id="result-box"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 05 -->
+    <section id="action">
+      <div class="container reveal">
+        <div class="action-card">
+          <span class="kicker">05 / TAKE ACTION</span>
+          <div class="section-header">
+            <h2>把正确的选择带回生活</h2>
+            <a href="#hero" class="back-home-btn">↑ 返回首页</a>
+          </div>
+          <p class="lead" style="margin-bottom: 0;">如果你或身边的人遇到冲突、压力或不当诱导，可以从以下行动开始：</p>
+          <ul>
+            <li><strong>先暂停：</strong>情绪激动时先离开冲突现场，避免用暴力、威胁或网络攻击解决问题。</li>
+            <li><strong>寻找帮助：</strong>向监护人、老师、学校心理老师、社工或可信赖的成年人说明情况。</li>
+            <li><strong>不参与、不转发：</strong>遇到欺凌、隐私泄露或违法邀约，不起哄、不扩散，必要时寻求帮助。</li>
+            <li><strong>承担责任并修复：</strong>如果自己的行为伤害了别人，先停止伤害，认真面对后果。</li>
+            <li><strong>持续求助：</strong>改变可能有反复。遇到困难时及时求助，比独自隐瞒更有帮助。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>交互式教学资源｜重新出发|涉罪未成年人持续帮扶和社会融入</p>
+    <p style="margin-top: 8px;">设计原则：尊重、法治、责任、隐私保护与持续支持。</p>
+  </footer>
+</div>
+
+<script>
+/* ================= 测验数据与逻辑 ================= */
+const quizData = [
+  { type: "判断题", q: "只要一个未成年人曾经涉罪，就说明他以后一定会再次违法。", options: ["正确", "错误"], answer: 1, explanation: "过去的行为需要依法面对，但不能据此断定一个人的未来。持续教育与适当支持有助于其学习承担责任。" },
+  { type: "单项选择", q: "同学在群聊里发了一段羞辱他人的视频，并催你转发。你应该怎么做？", options: ["马上转发，免得被同学排斥", "不转发，提醒对方停止传播，并向可信赖的成年人求助", "下载后发到其他群里讨论"], answer: 1, explanation: "不参与传播、不扩大伤害，并通过合适渠道求助。" },
+  { type: "判断题", q: "了解未成年人行为背后的家庭、情绪或同伴因素，就是在替错误开脱。", options: ["正确", "错误"], answer: 1, explanation: "了解原因是为了找到有效的预防和支持方法，不等于否认伤害或免除责任。" },
+  { type: "单项选择", q: "朋友让你帮忙转一笔来源不明的钱，并承诺给你报酬。你应该怎么做？", options: ["先答应，朋友之间不必多问", "报酬不高就可以做", "拒绝操作、核实情况；遇到胁迫及时求助"], answer: 2, explanation: "不要替来源不明的资金转账、取现或出借账户。遇到可疑要求应拒绝并求助。" },
+  { type: "判断题", q: "持续的学习、心理和生活支持，可能帮助涉罪未成年人更好地融入社会。", options: ["正确", "错误"], answer: 0, explanation: "持续支持能够帮助处理学习衔接、人际关系和生活规划等困难。" },
+  { type: "单项选择", q: "你和同学发生争执，已经非常生气。哪种方式更合适？", options: ["先暂停、冷静，再沟通或寻求调解", "在网上曝光对方个人信息", "叫更多朋友来现场施压"], answer: 0, explanation: "暂停有助于降低冲动行为的风险。冷静后可沟通，必要时寻求老师或家长协助。" },
+  { type: "判断题", q: "为了警示别人，可以随意把涉罪未成年人的姓名、照片和经历发到网上。", options: ["正确", "错误"], answer: 1, explanation: "公开传播未成年人的身份、经历或隐私可能造成持续伤害，应通过合法、适当的方式处理问题。" },
+  { type: "单项选择", q: "一个未成年人希望继续学习，却担心被同学议论。哪种支持更合适？", options: ["告诉所有同学他的经历", "不再让他参加任何集体活动", "尊重隐私，提供必要的学习衔接与心理支持"], answer: 2, explanation: "社会融入需要尊重隐私、合理支持和清晰边界，同时也要依法处理责任与安全问题。" }
+];
+
+let userAnswers = {};
+
+function renderQuestions() {
+  const container = document.getElementById('questions-container');
+  container.innerHTML = quizData.map((item, i) => `
+    <div class="question" id="q-${i}">
+      <span class="q-type">Q${i + 1} · ${item.type}</span>
+      <div class="q-title">${item.q}</div>
+      <div class="options-group">
+        ${item.options.map((opt, j) => `
+          <label class="option" id="opt-${i}-${j}">
+            <input type="radio" name="q-${i}" value="${j}" onchange="chooseAnswer(${i}, ${j})">
+            <span>${item.type === '判断题' ? opt : String.fromCharCode(65 + j) + '. ' + opt}</span>
+          </label>
+        `).join('')}
+      </div>
+      <div class="feedback" id="feedback-${i}"></div>
+    </div>
+  `).join('');
+  updateProgress();
+}
+
+function chooseAnswer(qIndex, optIndex) {
+  userAnswers[qIndex] = optIndex;
+  const item = quizData[qIndex];
+  const isCorrect = optIndex === item.answer;
+  
+  item.options.forEach((_, k) => {
+    const optEl = document.getElementById(`opt-${qIndex}-${k}`);
+    optEl.classList.remove('correct', 'incorrect');
+    if (k === item.answer) optEl.classList.add('correct');
+    if (k === optIndex && !isCorrect) optEl.classList.add('incorrect');
+  });
+
+  const fbEl = document.getElementById(`feedback-${qIndex}`);
+  let correctText = item.options[item.answer];
+  if (item.type !== '判断题') correctText = String.fromCharCode(65 + item.answer) + '. ' + correctText;
+  
+  fbEl.className = `feedback show ${isCorrect ? 'good' : 'bad'}`;
+  fbEl.innerHTML = `<strong>${isCorrect ? '✓ 正确' : '✕ 错误，正确答案是：' + correctText}</strong><br>${item.explanation}`;
+  
+  document.getElementById('result-box').classList.remove('show');
+  updateProgress();
+}
+
+function updateProgress() {
+  const count = Object.keys(userAnswers).length;
+  document.getElementById('progress-label').textContent = `${count} / ${quizData.length}`;
+  document.getElementById('progress-bar').style.width = `${(count / quizData.length) * 100}%`;
+}
+
+function submitQuiz() {
+  const unanswered = quizData.map((_, i) => i).filter(i => userAnswers[i] === undefined);
+  if (unanswered.length > 0) {
+    alert(`还有 ${unanswered.length} 题未完成，请补全后再提交。`);
+    document.getElementById(`q-${unanswered[0]}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  let score = 0;
+  quizData.forEach((item, i) => { if (userAnswers[i] === item.answer) score++; });
+  
+  const resBox = document.getElementById('result-box');
+  resBox.innerHTML = `
+    <h3 style="color:#fff; margin-bottom:12px; font-size:22px;">${score >= 7 ? '非常出色，你已掌握核心原则。' : (score >= 5 ? '不错，再巩固几个关键点。' : '这是一次学习机会，再挑战一次吧。')}</h3>
+    <div class="score-big">${score} / ${quizData.length}</div>
+    <p style="color:var(--text-light); font-size:15px; margin-bottom:12px;">正确率：${Math.round((score / quizData.length) * 100)}%</p>
+    <p style="color:var(--text-muted); font-size:13px;">记住：理解原因不等于替错误开脱；支持改变也不等于忽视责任。保护受害者权益、尊重隐私、提供持续帮助，都是社会融入的重要部分。</p>
+  `;
+  resBox.classList.add('show');
+  resBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function resetQuiz() {
+  userAnswers = {};
+  document.getElementById('result-box').classList.remove('show');
+  renderQuestions();
+  document.getElementById('quiz').scrollIntoView({ behavior: 'smooth' });
+}
+
+/* ================= 终极动效引擎：流星底板 + 蓝白冷调烟花 ================= */
+function initCanvasEffects() {
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let width, height;
+  let particles = [];
+  let meteors = [];
+
+  function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+    initMeteors();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // 1. 初始化流星
+  function initMeteors() {
+    meteors = [];
+    const count = Math.floor(width / 60); // 根据屏幕宽度决定流星数量
+    for (let i = 0; i < count; i++) {
+      meteors.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        length: Math.random() * 100 + 50,
+        speed: Math.random() * 4 + 2,
+        opacity: Math.random() * 0.5 + 0.2,
+        angle: Math.PI / 4 // 45度角
+      });
+    }
+  }
+
+  // 2. 烟花粒子类
+  class Particle {
+    constructor(x, y, color) {
+      this.x = x; this.y = y;
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 6 + 2;
+      this.vx = Math.cos(angle) * speed;
+      this.vy = Math.sin(angle) * speed;
+      this.color = color;
+      this.alpha = 1;
+      this.decay = Math.random() * 0.02 + 0.015;
+      this.size = Math.random() * 2.5 + 1;
+      this.gravity = 0.08;
+      this.friction = 0.96;
+    }
+    update() {
+      this.vx *= this.friction;
+      this.vy *= this.friction;
+      this.vy += this.gravity;
+      this.x += this.vx;
+      this.y += this.vy;
+      this.alpha -= this.decay;
+    }
+    draw() {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, this.alpha);
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      // 高级霓虹冷光
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = this.color;
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  // 3. 触发烟花（全屏任意点击生效）
+  function triggerFirework(x, y) {
+    // 蓝白冷色调：极光蓝、青白、纯白
+    const colors = ['#ffffff', '#e0f7fa', '#4fc3f7', '#00e5ff', '#b2ebf2'];
+    for (let i = 0; i < 45; i++) {
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      particles.push(new Particle(x, y, color));
+    }
+  }
+
+  // 绑定全局点击事件
+  window.addEventListener('click', (e) => {
+    if (!document.getElementById('intro-page').classList.contains('hidden')) return;
+    triggerFirework(e.clientX, e.clientY);
+  });
+  
+  window.addEventListener('touchstart', (e) => {
+    if (!document.getElementById('intro-page').classList.contains('hidden')) return;
+    const touch = e.touches[0];
+    triggerFirework(touch.clientX, touch.clientY);
+  }, { passive: true });
+
+  // 4. 主动画循环
+  function animate() {
+    // 背景底色（带有轻微拖尾效果）
+    ctx.fillStyle = 'rgba(4, 8, 18, 0.4)';
+    ctx.fillRect(0, 0, width, height);
+
+    // 绘制流星
+    meteors.forEach(m => {
+      ctx.beginPath();
+      ctx.moveTo(m.x, m.y);
+      ctx.lineTo(m.x - Math.cos(m.angle) * m.length, m.y - Math.sin(m.angle) * m.length);
+      ctx.strokeStyle = `rgba(0, 240, 255, ${m.opacity})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // 移动流星位置
+      m.x -= Math.cos(m.angle) * m.speed;
+      m.y -= Math.sin(m.angle) * m.speed;
+
+      // 超出边界则重置
+      if (m.x < -m.length || m.y < -m.length) {
+        m.x = width + Math.random() * 200;
+        m.y = Math.random() * height - 200;
+      }
+    });
+
+    // ===== 背景自动随机生成烟花（蓝白冷调） =====
+    if (Math.random() < 0.025 && particles.length < 150) {
+      const rx = width * 0.15 + Math.random() * (width * 0.7);
+      const ry = height * 0.1 + Math.random() * (height * 0.5);
+      triggerFirework(rx, ry);
+    }
+
+    // 绘制烟花粒子
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.update();
+      p.draw();
+      if (p.alpha <= 0) {
+        particles.splice(i, 1);
+      }
+    }
+
+    requestAnimationFrame(animate);
+  }
+  animate();
+}
+
+/* ================= 页面交互与初始化 ================= */
+document.addEventListener('DOMContentLoaded', () => {
+  renderQuestions();
+  initCanvasEffects();
+
+  // 滚动渐显
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('active');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // 点击进入系统
+  const introPage = document.getElementById('intro-page');
+  const mainApp = document.getElementById('main-app');
+  const enterBtn = document.getElementById('enter-btn');
+  
+  enterBtn.addEventListener('click', () => {
+    // 隐藏开场页
+    introPage.classList.add('hidden');
+    // 显示主页并解锁滚动
+    mainApp.classList.add('active');
+    document.body.classList.remove('lock');
+    
+    // 触发第一个板块的渐显效果
+    setTimeout(() => {
+      const heroReveal = document.querySelector('.hero .reveal');
+      if(heroReveal) heroReveal.classList.add('active');
+    }, 100);
+  });
+});
+</script>
+</body>
+</html>
